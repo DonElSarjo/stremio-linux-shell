@@ -46,6 +46,13 @@ struct Args {
     #[arg(short, long)]
     no_server: bool,
 }
+pub fn get_scale() -> f32 {
+    std::env::var("STREMIO_SCALE_FACTOR")
+        .ok()
+        .and_then(|v| v.parse::<f32>().ok())
+        .unwrap_or(1.0)
+}
+
 
 fn main() -> ExitCode {
     tracing_subscriber::fmt::init();
@@ -152,12 +159,15 @@ fn main() -> ExitCode {
                 with_gl(|surface, context| {
                     surface.resize(
                         context,
-                        NonZeroU32::new(size.0 as u32).unwrap(),
-                        NonZeroU32::new(size.1 as u32).unwrap(),
+                        NonZeroU32::new((size.0 as f32 / get_scale()) as u32).unwrap(),
+                        NonZeroU32::new((size.1 as f32 / get_scale()) as u32).unwrap(),
                     );
 
                     with_renderer_write(|renderer| {
-                        renderer.resize(size.0, size.1);
+                        let scale = get_scale();
+                        let logical_w = (size.0 as f32 / scale) as i32;
+                        let logical_h = (size.1 as f32 / scale) as i32;
+                        renderer.resize(logical_w, logical_h);
                     });
 
                     webview.update();

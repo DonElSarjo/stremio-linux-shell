@@ -6,6 +6,13 @@ use crate::{
     webview::SENDER,
 };
 
+fn get_scale() -> f32 {
+    std::env::var("STREMIO_SCALE_FACTOR")
+        .ok()
+        .and_then(|v| v.parse::<f32>().ok())
+        .unwrap_or(1.0)
+}
+
 cef_impl!(
     prefix = "WebView",
     name = RenderHandler,
@@ -17,11 +24,7 @@ cef_impl!(
             screen_info: Option<&mut ScreenInfo>,
         ) -> ::std::os::raw::c_int {
             if let Some(screen_info) = screen_info {
-                screen_info.device_scale_factor =
-                    std::env::var("STREMIO_SCALE_FACTOR")
-                        .ok()
-                        .and_then(|v| v.parse::<f32>().ok())
-                        .unwrap_or(1.0);
+                screen_info.device_scale_factor = get_scale();
                 return true as _;
             }
             false as _
@@ -30,23 +33,16 @@ cef_impl!(
         fn view_rect(&self, _browser: Option<&mut Browser>, rect: Option<&mut Rect>) {
             with_renderer_read(|renderer| {
                 if let Some(rect) = rect {
-                    let scale = std::env::var("STREMIO_SCALE_FACTOR")
-                        .ok()
-                        .and_then(|v| v.parse::<f32>().ok())
-                        .unwrap_or(1.0);
                     *rect = Rect {
                         x: 0,
                         y: 0,
-                        width: (renderer.width as f32 / scale) as i32,
-                        height: (renderer.height as f32 / scale) as i32,
+                        width: renderer.width,
+                        height: renderer.height,
                     };
                 }
             });
         }
 
-        // The `width` and `height` parameters may be outdated due to asynchronous updates from `on_paint` and `view_rect`.
-        // We compare them against the current renderer dimensions before painting.
-        // If they don't match, send a Resized event to ask for a repaint.
         fn on_paint(
             &self,
             _browser: Option<&mut Browser>,

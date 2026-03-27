@@ -13,8 +13,8 @@ impl From<MouseState> for cef::MouseEvent {
         };
 
         Self {
-            x: state.position.0,
-            y: state.position.1,
+            x: (state.position.0 as f32 / crate::get_scale()) as i32,
+            y: (state.position.1 as f32 / crate::get_scale()) as i32,
             modifiers,
         }
     }
