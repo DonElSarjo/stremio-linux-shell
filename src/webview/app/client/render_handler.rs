@@ -11,14 +11,34 @@ cef_impl!(
     name = RenderHandler,
     sys_type = cef_dll_sys::cef_render_handler_t,
     {
+        fn screen_info(
+            &self,
+            _browser: Option<&mut Browser>,
+            screen_info: Option<&mut ScreenInfo>,
+        ) -> ::std::os::raw::c_int {
+            if let Some(screen_info) = screen_info {
+                screen_info.device_scale_factor =
+                    std::env::var("STREMIO_SCALE_FACTOR")
+                        .ok()
+                        .and_then(|v| v.parse::<f32>().ok())
+                        .unwrap_or(1.0);
+                return true as _;
+            }
+            false as _
+        }
+
         fn view_rect(&self, _browser: Option<&mut Browser>, rect: Option<&mut Rect>) {
             with_renderer_read(|renderer| {
                 if let Some(rect) = rect {
+                    let scale = std::env::var("STREMIO_SCALE_FACTOR")
+                        .ok()
+                        .and_then(|v| v.parse::<f32>().ok())
+                        .unwrap_or(1.0);
                     *rect = Rect {
                         x: 0,
                         y: 0,
-                        width: renderer.width,
-                        height: renderer.height,
+                        width: (renderer.width as f32 / scale) as i32,
+                        height: (renderer.height as f32 / scale) as i32,
                     };
                 }
             });

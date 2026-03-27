@@ -23,7 +23,7 @@ use tracing::error;
 use url::Url;
 use winit::{
     application::ApplicationHandler,
-    dpi::PhysicalSize,
+    dpi::{LogicalSize, PhysicalSize},
     event::{ElementState, KeyEvent, Touch, WindowEvent},
     event_loop::ActiveEventLoop,
     keyboard::ModifiersState,
@@ -97,8 +97,8 @@ impl App {
             .with_decorations(true)
             .with_resizable(true)
             .with_maximized(self.maximized)
-            .with_min_inner_size(PhysicalSize::new(900, 600))
-            .with_inner_size(PhysicalSize::<u32>::from(WINDOW_SIZE));
+            .with_min_inner_size(LogicalSize::new(900, 600))
+            .with_inner_size(LogicalSize::new(WINDOW_SIZE.0 as u32, WINDOW_SIZE.1 as u32));
 
         let (window, config) = utils::create_window(event_loop, window_attributes);
         let surface = utils::create_surface(&config, &window);
